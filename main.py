@@ -14,18 +14,18 @@ import os
 import sys
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
+load_dotenv()  # Must run BEFORE importing services that read env vars
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 from models import InteractRequest, InteractResponse, NegotiationState
 from services.middleware import base64_to_bytes, bytes_to_base64
-from services.voice_ops import transcribe_with_sarvam, speak_with_sarvam
+from services.voice_ops import transcribe_with_sarvam, speak_with_sarvam, normalize_language_code
 from services.rag_ops import initialize_knowledge_base, retrieve_context
 from services.context_memory import ConversationMemory
 from services.exceptions import SarvamServiceError, RAGServiceError
-
-load_dotenv()
 
 # ── Logging setup ──────────────────────────────────────────────────────
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -174,44 +174,81 @@ async def test_pipeline(req: TestRequest):
     }
     """
     session_id = "test-session"
-    language_code = req.inputLanguage
+    language_code = normalize_language_code(req.inputLanguage)
+    target_language = normalize_language_code(req.targetLanguage)
 
     # ── Log incoming request ──
     logger.info("─" * 60)
     logger.info("▶ REQUEST  /api/test")
-    logger.info("  inputLanguage : %s", req.inputLanguage)
-    logger.info("  targetLanguage: %s", req.targetLanguage)
+    logger.info("  inputLanguage : %s → %s", req.inputLanguage, language_code)
+    logger.info("  targetLanguage: %s → %s", req.targetLanguage, target_language)
     logger.info("  contextTag    : %s", req.contextTag)
     logger.info("  audioData     : %d chars", len(req.audioData))
 
-    # 1. Decode base64 → raw bytes
+    # Step 2 — Decode base64 → raw bytes
     try:
         audio_bytes = base64_to_bytes(req.audioData)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid audioData: {e}")
 
-    # 2. STT
+    # Step 3 — STT
     try:
         transcribed_text = await transcribe_with_sarvam(audio_bytes, language_code)
     except SarvamServiceError as e:
         raise HTTPException(status_code=503, detail=f"STT failed: {e}")
 
-    # 3. Mock brain
-    brain_result = await _mock_generate_vendor_response(
+    # Step 4 — Store user turn in memory
+    memory = get_memory(session_id)
+    memory.add_turn(
+        role="user",
+        text=transcribed_text,
+        metadata={
+            "inputLanguage": req.inputLanguage,
+            "targetLanguage": req.targetLanguage,
+            "contextTag": req.contextTag,
+        },
+    )
+
+    # Steps 5 & 6 — Parallel: context history + RAG retrieval
+    rag_context = ""
+    try:
+        context_block, rag_context = await asyncio.gather(
+            asyncio.to_thread(memory.get_context_block),
+            retrieve_context(transcribed_text, n_results=3),
+        )
+    except RAGServiceError:
+        context_block = memory.get_context_block()
+        rag_context = ""
+        logger.warning("RAG unavailable, continuing without context")
+
+    logger.info("  context_block: %d chars", len(context_block))
+    logger.info("  rag_context  : %d chars", len(rag_context))
+    if rag_context:
+        logger.info("  rag_preview  : %s", rag_context[:200])
+
+    # Step 7 — Brain (mock or Dev A's real function)
+    brain_result = await generate_vendor_response(
         transcribed_text=transcribed_text,
-        context_block="",
-        rag_context="",
+        context_block=context_block,
+        rag_context=rag_context,
         scene_context={"contextTag": req.contextTag, "targetLanguage": req.targetLanguage},
         session_id=session_id,
     )
 
-    # 4. TTS → base64
+    # Step 8 — Store vendor turn in memory
+    memory.add_turn(
+        role="vendor",
+        text=brain_result["reply_text"],
+        metadata={"vendor_mood": brain_result.get("vendor_mood", "neutral")},
+    )
+
+    # Step 9 & 10 — TTS → base64
     agent_audio_b64 = ""
     try:
-        tts_bytes = await speak_with_sarvam(brain_result["reply_text"], req.targetLanguage)
+        tts_bytes = await speak_with_sarvam(brain_result["reply_text"], target_language)
         agent_audio_b64 = bytes_to_base64(tts_bytes)
     except SarvamServiceError:
-        pass
+        logger.warning("TTS unavailable, sending text-only response")
 
     response = {
         "session_id": session_id,
@@ -222,6 +259,7 @@ async def test_pipeline(req: TestRequest):
         "agent_reply_text": brain_result["reply_text"],
         "agent_audio_base64": agent_audio_b64,
         "vendor_mood": brain_result.get("vendor_mood", "neutral"),
+        "rag_context_used": rag_context[:500] if rag_context else "",
     }
 
     # ── Log outgoing response ──
@@ -230,6 +268,7 @@ async def test_pipeline(req: TestRequest):
     logger.info("  reply_text   : %s", brain_result["reply_text"])
     logger.info("  audio_out    : %d chars", len(agent_audio_b64))
     logger.info("  vendor_mood  : %s", brain_result.get("vendor_mood", "neutral"))
+    logger.info("  rag_context  : %d chars", len(rag_context))
     logger.info("─" * 60)
 
     return response
@@ -304,6 +343,12 @@ async def interact(request: InteractRequest) -> InteractResponse:
         # Graceful degradation — continue without RAG
         context_block = memory.get_context_block()
         rag_context = ""
+        logger.warning("RAG unavailable, continuing without context")
+
+    logger.info("  context_block: %d chars", len(context_block))
+    logger.info("  rag_context  : %d chars", len(rag_context))
+    if rag_context:
+        logger.info("  rag_preview  : %s", rag_context[:200])
 
     # Step 7 — Call Dev A's brain (LLM + Neo4j validation)
     try:
