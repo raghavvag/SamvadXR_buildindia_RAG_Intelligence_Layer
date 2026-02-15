@@ -13,7 +13,10 @@ import logging
 import os
 import sys
 import time
+import uuid
 from contextlib import asynccontextmanager
+
+import httpx
 
 from dotenv import load_dotenv
 load_dotenv()  # Must run BEFORE importing services that read env vars
@@ -47,12 +50,45 @@ logger = logging.getLogger("samvadxr")
 
 # ── Session store (in-memory, Dev B manages this) ──────────────────────
 sessions: dict[str, ConversationMemory] = {}
+_active_session_id: str | None = None
 
 
 def get_memory(session_id: str) -> ConversationMemory:
     if session_id not in sessions:
         sessions[session_id] = ConversationMemory(session_id=session_id)
     return sessions[session_id]
+
+
+def get_or_create_session(negotiation_state: str) -> tuple[str, ConversationMemory, bool]:
+    """
+    Resolve session based on negotiation_state from Unity.
+
+    - "" or "GREETING" → fresh session (new UUID, empty memory)
+    - Anything else      → continue the active session
+
+    Returns: (session_id, memory, is_new_session)
+    """
+    global _active_session_id
+
+    is_fresh = negotiation_state in ("", "GREETING")
+
+    if is_fresh:
+        new_id = f"session-{uuid.uuid4().hex[:8]}"
+        sessions[new_id] = ConversationMemory(session_id=new_id)
+        _active_session_id = new_id
+        logger.info("  \U0001f195 New session: %s (state=%s)", new_id, negotiation_state or "<empty>")
+        return new_id, sessions[new_id], True
+
+    if _active_session_id and _active_session_id in sessions:
+        logger.info("  \U0001f504 Continuing session: %s (state=%s)", _active_session_id, negotiation_state)
+        return _active_session_id, sessions[_active_session_id], False
+
+    # No active session but mid-flow state — create one anyway
+    new_id = f"session-{uuid.uuid4().hex[:8]}"
+    sessions[new_id] = ConversationMemory(session_id=new_id)
+    _active_session_id = new_id
+    logger.warning("  \u26a0\ufe0f No active session for state=%s, creating: %s", negotiation_state, new_id)
+    return new_id, sessions[new_id], True
 
 
 # ── Dummy brain for testing (skip Dev A for now) ──────────────────────
@@ -100,9 +136,69 @@ async def _dummy_generate_vendor_response(
 
 
 # ── Use dummy brain for now (swap to Dev A's real function later) ─────
-generate_vendor_response = _dummy_generate_vendor_response
-logger.info("Using DUMMY brain for testing — Dev A's brain not connected")
+# generate_vendor_response = _dummy_generate_vendor_response
+# logger.info("Using DUMMY brain for testing — Dev A's brain not connected")
 
+# ── Dev A's real brain endpoint ───────────────────────────────────────
+DEV_A_URL = os.getenv(
+    "DEV_A_URL",
+    "https://7ec4-2409-40f4-30-ed85-1cc7-f2da-f7dc-a771.ngrok-free.app/api/dev/generate",
+)
+_DEV_A_TIMEOUT = float(os.getenv("DEV_A_TIMEOUT", "30"))  # seconds
+
+
+async def generate_vendor_response(
+    session_id: str,
+    transcribed_text: str,
+    context_block: str,
+    rag_context: str,
+    scene_context: dict,
+) -> dict:
+    """
+    Call Dev A's /dev/generate endpoint.
+    Falls back to dummy brain if the call fails.
+    """
+    payload = {
+        "session_id": session_id,
+        "transcribed_text": transcribed_text,
+        "context_block": context_block,
+        "rag_context": rag_context,
+        "scene_context": scene_context,
+    }
+    logger.info("  → Calling Dev A at %s", DEV_A_URL)
+    logger.debug("    payload keys: %s", list(payload.keys()))
+
+    try:
+        async with httpx.AsyncClient(timeout=_DEV_A_TIMEOUT) as client:
+            resp = await client.post(DEV_A_URL, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            logger.info("  ✅ Dev A responded (status=%s)", resp.status_code)
+            logger.debug("    Dev A response: %s", data)
+
+            # Normalise keys — Dev A may return slightly different names
+            return {
+                "reply_text": data.get("reply_text", data.get("reply", "")),
+                "negotiation_state": data.get("negotiation_state", scene_context.get("negotiation_state", "GREETING")),
+                "happiness_score": data.get("happiness_score", scene_context.get("happiness_score", 50)),
+                "vendor_mood": data.get("vendor_mood", "neutral"),
+            }
+
+    except httpx.TimeoutException:
+        logger.error("  ⏱️ Dev A timed out after %.1fs — falling back to dummy brain", _DEV_A_TIMEOUT)
+    except httpx.HTTPStatusError as exc:
+        logger.error("  ❌ Dev A returned HTTP %s — falling back to dummy brain", exc.response.status_code)
+    except Exception as exc:
+        logger.error("  ❌ Dev A call failed (%s: %s) — falling back to dummy brain", type(exc).__name__, exc)
+
+    # ── Fallback to dummy brain ───────────────────────────────────────
+    logger.warning("  ⚠️ Using DUMMY brain fallback")
+    return await _dummy_generate_vendor_response(
+        session_id, transcribed_text, context_block, rag_context, scene_context,
+    )
+
+
+logger.info("Dev A brain endpoint configured: %s (timeout=%.1fs)", DEV_A_URL, _DEV_A_TIMEOUT)
 
 # ── App lifespan (startup / shutdown) ──────────────────────────────────
 @asynccontextmanager
@@ -200,19 +296,21 @@ async def test_pipeline(req: TestRequest):
 
     Returns:
     {
-        "reply": "<transcribed user speech>",
+        "reply": "<vendor's text response>",
         "audioReply": "<base64 TTS audio of vendor response>",
-        "negotiation_state": "HAGGLING"
+        "negotiation_state": "HAGGLING",
+        "happiness_score": 55
     }
     """
     request_start = time.perf_counter()
-    session_id = "test-session"
+    session_id, memory, is_new = get_or_create_session(req.negotiation_state)
     language_code = normalize_language_code(req.inputLanguage)
     target_language = normalize_language_code(req.targetLanguage)
 
     # ── Log incoming request ──
     logger.info("─" * 60)
     logger.info("▶ REQUEST  /api/test")
+    logger.info("  session_id        : %s %s", session_id, "(NEW)" if is_new else "(continuing)")
     logger.info("  inputLanguage     : %s → %s", req.inputLanguage, language_code)
     logger.info("  targetLanguage    : %s → %s", req.targetLanguage, target_language)
     logger.info("  object_grabbed    : %s", req.object_grabbed)
@@ -246,10 +344,10 @@ async def test_pipeline(req: TestRequest):
             "reply": "",
             "audioReply": "",
             "negotiation_state": req.negotiation_state,
+            "happiness_score": req.happiness_score,
         }
 
     # ── Step 4 — Store user turn in memory ──
-    memory = get_memory(session_id)
     logger.info("  Step 4 memory : session=%s, total_turns=%d", session_id, len(memory.get_recent_turns(n=100)))
     memory.add_turn(
         role="user",
@@ -332,10 +430,13 @@ async def test_pipeline(req: TestRequest):
         logger.warning("Steps 9+10 FAILED: TTS unavailable — %s (sending text-only)", e)
 
     # ── Step 11 — Return BackendFullResponse to Unity ──
+    updated_happiness = brain_result.get("happiness_score", req.happiness_score)
+    vendor_text = brain_result["reply_text"]
     response = {
-        "reply": transcribed_text,
+        "reply": vendor_text,
         "audioReply": audio_reply,
         "negotiation_state": updated_negotiation_state,
+        "happiness_score": updated_happiness,
     }
 
     # ── Log outgoing response ──
@@ -345,6 +446,9 @@ async def test_pipeline(req: TestRequest):
     logger.info("  vendor_reply       : %s", brain_result["reply_text"])
     logger.info("  audio_out          : %d chars", len(audio_reply))
     logger.info("  negotiation_state  : %s → %s", req.negotiation_state, updated_negotiation_state)
+    logger.info("  happiness_score    : %d → %d", req.happiness_score, updated_happiness)
+    logger.info("  memory_turns       : %d", len(memory.get_recent_turns(n=100)))
+    logger.info("  active_sessions    : %d", len(sessions))
     logger.info("─" * 60)
 
     return response
