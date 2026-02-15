@@ -98,8 +98,8 @@ class TestAddTurn:
     def test_metadata_stored_as_is(self):
         """Metadata is arbitrary dict, stored as-is (execution plan requirement)."""
         meta = {
-            "held_item": "silk_scarf",
-            "looked_at_item": "brass_statue",
+            "held_item": "tomato",
+            "looked_at_item": "mango",
             "vendor_happiness": 55,
             "vendor_patience": 70,
             "stage": "BROWSING",
@@ -144,13 +144,13 @@ class TestGetContextBlock:
         mem = ConversationMemory()
         mem.add_turn("user", "Namaste bhaiya!")
         mem.add_turn("vendor", "Aao aao! Kya chahiye?")
-        mem.add_turn("user", "भाई ये silk scarf कितने का है?")
+        mem.add_turn("user", "भाई ये tamatar कितने का है?")
 
         block = mem.get_context_block()
         assert "[Recent Dialogue]" in block
         assert "[Turn 1] User: Namaste bhaiya!" in block
         assert "[Turn 1] Vendor: Aao aao! Kya chahiye?" in block
-        assert "[Turn 2] User: भाई ये silk scarf कितने का है?" in block
+        assert "[Turn 2] User: भाई ये tamatar कितने का है?" in block
 
     def test_text_only_no_metadata(self):
         """Context block must NOT contain metadata keys (execution plan: text-only)."""
@@ -198,10 +198,10 @@ class TestGetContextBlock:
     def test_hindi_text_preserved(self):
         mem = ConversationMemory()
         mem.add_turn("user", "भाई ये कितने का है?")
-        mem.add_turn("vendor", "₹800 लगेगा, pure Banarasi silk है!")
+        mem.add_turn("vendor", "₹40 lagega per kilo, bilkul taaza hai!")
         block = mem.get_context_block()
         assert "भाई ये कितने का है?" in block
-        assert "₹800 लगेगा" in block
+        assert "₹40 lagega" in block
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -240,12 +240,12 @@ class TestGetRecentTurns:
 
     def test_metadata_accessible_via_recent_turns(self):
         """Execution plan: metadata is accessible via get_recent_turns."""
-        meta = {"held_item": "silk_scarf", "stage": "HAGGLING"}
+        meta = {"held_item": "tomato", "stage": "HAGGLING"}
         mem = ConversationMemory()
-        mem.add_turn("user", "₹400 final", metadata=meta)
+        mem.add_turn("user", "₹40 final", metadata=meta)
         recent = mem.get_recent_turns(n=1)
         assert recent[0].metadata == meta
-        assert recent[0].metadata["held_item"] == "silk_scarf"
+        assert recent[0].metadata["held_item"] == "tomato"
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -476,8 +476,8 @@ class TestEdgeCases:
     def test_large_metadata(self):
         """Metadata can be arbitrarily complex."""
         meta = {
-            "held_item": "silk_scarf",
-            "looked_at_items": ["brass_keychain", "spice_box"],
+            "held_item": "tomato",
+            "looked_at_items": ["onion", "potato"],
             "nested": {"a": {"b": {"c": 42}}},
             "tags": [1, 2, 3],
         }
@@ -512,14 +512,14 @@ class TestEdgeCases:
         exchanges = [
             ("user", "Namaste bhaiya!", {"stage": "GREETING"}),
             ("vendor", "Aao aao! Kya chahiye?", {"stage": "GREETING"}),
-            ("user", "Ye silk scarf dikhao", {"stage": "BROWSING", "looked_at_item": "silk_scarf"}),
-            ("vendor", "Pure Banarasi silk! ₹800 lagega", {"stage": "HAGGLING", "price": 800}),
-            ("user", "Bahut mehnga! ₹300 do", {"stage": "HAGGLING"}),
-            ("vendor", "₹300?! Itne mein dhaga bhi nahi aata!", {"stage": "HAGGLING", "price": 700}),
-            ("user", "Chalo ₹450 final", {"stage": "HAGGLING"}),
-            ("vendor", "₹500 se neeche impossible", {"stage": "HAGGLING", "price": 500}),
-            ("user", "Theek hai, ₹500 done", {"stage": "DEAL"}),
-            ("vendor", "Bahut accha! Deal pakka!", {"stage": "DEAL", "price": 500}),
+            ("user", "Ye tamatar dikhao", {"stage": "BROWSING", "looked_at_item": "tomato"}),
+            ("vendor", "Bilkul taaza hai! ₹80 per kilo lagega", {"stage": "HAGGLING", "price": 80}),
+            ("user", "Bahut mehnga! ₹30 do", {"stage": "HAGGLING"}),
+            ("vendor", "₹30?! Itne mein toh mandi se bhi nahi ayega!", {"stage": "HAGGLING", "price": 60}),
+            ("user", "Chalo ₹40 final", {"stage": "HAGGLING"}),
+            ("vendor", "₹50 se neeche impossible", {"stage": "HAGGLING", "price": 50}),
+            ("user", "Theek hai, ₹50 done", {"stage": "DEAL"}),
+            ("vendor", "Bahut accha! Deal pakka!", {"stage": "DEAL", "price": 50}),
         ]
 
         for role, text, meta in exchanges:
@@ -527,7 +527,7 @@ class TestEdgeCases:
 
         block = mem.get_context_block()
         assert "[Recent Dialogue]" in block
-        assert "₹500 done" in block
+        assert "₹50 done" in block
         assert "Deal pakka" in block
 
         # All 10 within window, no summary
@@ -535,7 +535,7 @@ class TestEdgeCases:
 
         # Metadata preserved
         recent = mem.get_recent_turns(n=2)
-        assert recent[-1].metadata.get("price") == 500
+        assert recent[-1].metadata.get("price") == 50
 
         # Serialization works
         d = mem.to_dict()

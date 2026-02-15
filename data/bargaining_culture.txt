@@ -1,29 +1,69 @@
-Indian Bazaar Bargaining Culture and Social Norms
+[Cultural Context: Indian Sabzi Mandi / Fruit & Vegetable Shop Bargaining]
+- This is a sabzi mandi (vegetable market) and fruit shop. The vendor sells ONLY fruits and vegetables -- no silk, no brass, no handicrafts.
+- Vegetable vendors in Indian street markets expect bargaining on every transaction.
+- The first quoted price is ALWAYS 2-4x the actual selling price. This is not dishonesty -- it is the game.
+- A vendor who sells at first-ask loses respect from neighboring vendors. Reputation matters more than one sale.
+- Local customers ("pukka grahak") get better rates than outsiders. Building rapport unlocks discounts.
+- The vendor will act offended at low offers -- this is theater, not genuine anger. Phrases like "Itne mein toh mera khana bhi nahi niklega" (I can't even eat at that price) are standard.
+- Walking away is the nuclear option. 8 out of 10 times, the vendor will call you back with a lower price.
+- Buying in bulk (2kg+) is a legitimate reason for discount. Vendors respect volume buyers.
+- Morning customers often get slight discounts ("bohni" -- first sale of the day is considered auspicious).
+- Touching/squeezing vegetables and fruits before buying is expected. If the vendor stops you, the produce may not be fresh.
+- Final price is usually 40-60% of the first quoted price for a skilled bargainer.
+- Never insult the merchandise or the vendor. Criticism should be respectful and factual, not emotional.
+- The concept of "last price" has cultural meaning. When the vendor says "last price," they usually still have 10-15% margin left.
+- Silence after a counter-offer is powerful. The vendor will fill the silence with concessions.
 
-In Indian street markets (bazaars), bargaining is not just expected — it is a social ritual and an essential part of the shopping experience. Fixed prices are the exception, not the rule, in traditional markets. The vendor and buyer both understand that the first quoted price is a starting point for negotiation, not the actual value.
+[Cultural Context: Sabzi Mandi Shopping Dynamics]
+- Sabzi mandi vendors arrange their freshest produce at the front and older stock at the back.
+- Customers who look knowledgeable (checking quality, asking about freshness) get quoted lower prices.
+- Perishables like tomatoes, spinach, and coriander have the most room for bargaining in the evening.
+- Fruit vendors are generally firmer on pricing than vegetable vendors because fruits have higher margins.
+- Premium fruits like Alphonso mango, pomegranate, and imported apples have less negotiation room.
+- "Tol ke do" (weigh it for me) is essential -- some vendors shortchange on weight by distracting you with conversation.
+- Always check the bottom of bags or baskets -- vendors sometimes layer old produce under fresh ones.
+- Seasonal awareness is KEY. Knowing what's in season gives you pricing power. Off-season produce is ALWAYS overpriced.
+- Free extras like dhaniya (coriander) and hari mirch (green chili) are customary with purchases over ₹100-200.
+- Comparing prices from nearby stalls is expected: "Saamne wala ₹40 mein de raha hai" (the stall across is selling at ₹40).
 
-The vendor's first price is always 2-4 times the actual value. This is not dishonesty — it is the opening move in an expected negotiation dance. A good buyer starts at 25-30% of the quoted price and works upward. The final price usually settles around 40-60% of the initial quote.
+[Vendor Psychology -- Sabzi Wala / Fruit Seller]
+- Pride: A sabzi wala who has been in the market for years knows his produce deeply. Compliment the freshness and quality.
+- Anchoring: The vendor's first price sets the psychological ceiling. A smart buyer ignores it entirely and counters at 25-30%.
+- Emotional leverage: "Bhaiya, roz ayenge" (I'll come daily) signals long-term business -- vendors value repeat customers over one-time profit.
+- The "chillar nahi hai" trick: Claiming no change for large notes to round up the price. Common tactic. Carry small cash (₹10, ₹20, ₹50 notes).
+- Bundle deals: "Ye tamatar ke saath dhaniya free dedo" (throw in coriander for free with tomatoes) is standard and expected.
+- Weight manipulation: Some vendors keep their thumb on the scale. Watch the weighing carefully. "Bhaiya theek se tolo" (weigh properly) is a polite check.
+- Quality mix: Vendors bag fresh produce on top with old stock underneath. Always ask "Bhaiya achhi wali dena" (give good quality ones).
+- The sob story: "Aaj kuch bikka nahi" (nothing sold today) may or may not be true. It's a sympathy tactic for higher price acceptance.
+- Time-of-day strategy: Morning = freshest produce, highest prices. Evening = discounted prices to clear perishable stock.
+- Relationship building: A vendor who knows your name and preferences will prioritize fresh stock for you and give honest pricing.
 
-Showing too much interest in an item raises its price. A common strategy is to pick up a cheaper item first, pretend to be interested in it, then "casually" notice the real target item. The vendor reads body language carefully — excited eyes or lingering touches on an item signal high interest, which increases the price.
+[Vendor Psychology -- Mood and Happiness]
+- A happy vendor (happiness_score > 60) is more flexible on price, offers free extras (dhaniya, mirch), and engages warmly.
+- A neutral vendor (40-60) plays it safe -- standard negotiation, no extras, no concessions without reason.
+- An annoyed vendor (happiness_score < 40) becomes stubborn, quotes higher, may dismiss the buyer or give poor quality produce.
+- NEVER push a vendor below happiness 20 -- they will refuse to sell entirely or give you the worst stock.
+- Complimenting the vendor's produce freshness or shop arrangement ALWAYS raises happiness by 5-10 points.
+- Low-balling (offering less than 25% of quoted price) drops happiness by 15-20 points instantly.
+- Walking away drops happiness 10-15 points but is the strongest price lever if the vendor calls you back.
+- Buying multiple items (mixed vegetables + fruits) raises happiness 10-15 points -- vendors love volume and variety orders.
+- Asking for free dhaniya/mirch without buying enough drops happiness 5-10 points -- it signals cheapness.
+- Saying "Bhaiya aaj bohot taaza lag raha hai sab" (everything looks very fresh today) is the single best happiness booster.
 
-Walking away is the most powerful bargaining lever. The vendor will often call you back with a lower price. This is known as the "walk-away bluff." However, actually walking away works best when you have shown genuine interest first — the vendor needs to believe they are losing a real sale.
+[Negotiation State Machine -- Rules]
+- GREETING: The opening phase. Greet the vendor warmly. Ask about their day. Compliment the produce display. Do NOT ask price immediately -- it signals urgency.
+- INQUIRY: The vendor shows items, explains freshness and quality. The buyer asks about seasonal availability, which batch came today, and what's freshest. STILL no price talk ideal.
+- BARGAINING: Price negotiation begins. The vendor quotes high, buyer counters low. Multiple rounds of back-and-forth happen here. Buyer references nearby stall prices.
+- COUNTER: The final showdown. The buyer threatens to walk away. The vendor makes their best offer. One side must yield. Buyer may ask for free extras to sweeten deal.
+- DEAL_CLOSED: Agreement reached. The vendor weighs and bags the produce. Buyer pays. Both sides ideally leave satisfied.
+- A skilled negotiation moves through ALL five states. Jumping from GREETING to DEAL_CLOSED means the buyer overpaid.
+- If the buyer is TOO aggressive in BARGAINING, the vendor may "reset" back to INQUIRY by changing the subject to quality: "Bhaiya pehle dekh toh lo kitna taaza hai" (first see how fresh it is).
 
-Touching or picking up an item signals commitment. In many bazaars, once you have handled an item extensively, the vendor may become more persistent and refuse to let you leave without a deal. Some vendors interpret handling as a social contract to negotiate seriously.
-
-Eye contact and friendly banter build rapport and can lower prices. Vendors respond well to humor and personal connection. Calling the vendor "bhaiya" (brother) or "didi" (sister) creates familiarity and often results in better prices.
-
-Buying multiple items gives bargaining power. Vendors are more willing to reduce per-item prices for bulk purchases. A common tactic is to say "I will buy three items — give me a good price for all three."
-
-Time of day matters. Early morning sales are considered auspicious by many vendors, so first customers may get better prices. Late in the evening, vendors may also be willing to sell cheaper to close out the day.
-
-Comparing with nearby shops is a legitimate strategy. Saying "the shop next door is offering it for less" puts pressure on the vendor. However, vendors know each other's approximate prices, so wildly false claims will backfire.
-
-Silence is a negotiation tool. After the vendor quotes a price, responding with silence and a skeptical expression often leads to an immediate discount. The discomfort of silence pushes the vendor to fill it with a better offer.
-
-Never insult the merchandise or the vendor. Criticism of quality should be respectful and factual, not emotional. Saying "This stitching looks uneven, so maybe a lower price is fair" works better than "This is garbage."
-
-The concept of "fixed price" or "last price" has cultural meaning. When the vendor says "last price," they usually still have 10-15% margin left. When the buyer says "last price," it signals seriousness and that they are about to walk away.
-
-Payment method matters. Cash payments often get a small discount (2-5%) because the vendor avoids transaction fees. Asking "cash discount?" is perfectly acceptable.
-
-Festival seasons may affect prices. During Diwali, Holi, or other festivals, some vendors raise prices due to demand, while others offer deals to attract auspicious sales. Understanding the local festival calendar helps.
+[Payment and Closing Customs]
+- Cash payments earn 2-5% discount because vendors avoid digital transaction fees and tax reporting.
+- "Cash mein de raha hoon" (I'm paying in cash) is a legitimate discount lever.
+- UPI/PhonePe is increasingly accepted but vendors may round up: ₹147 becomes ₹150 on UPI.
+- Festival seasons (Diwali, Holi, Navratri) increase vegetable demand -- prices rise but "shubh" (auspicious) deals exist.
+- After closing a deal, saying "Shukriya bhaiya, phir ayenge" (Thanks brother, I'll come again) builds goodwill for next time.
+- Vendors remember faces. Being rude in one stall can spread word to neighboring stalls in the mandi.
+- Regulars get the best deals: fresh stock kept aside, honest weights, free extras, and advance information on price drops.

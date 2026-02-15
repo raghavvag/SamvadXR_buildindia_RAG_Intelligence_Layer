@@ -44,6 +44,8 @@ VALID_WAV_B64 = _make_wav_base64(0.5)
 # Patch targets — must patch where used (main module), not where defined
 _PATCH_STT = "main.transcribe_with_sarvam"
 _PATCH_TTS = "main.speak_with_sarvam"
+_PATCH_DETECT_LANG = "main.detect_language_robust"
+_PATCH_TRANSLATE = "main.translate_with_sarvam"
 
 
 # ── /api/test — Full Pipeline Tests ───────────────────────────────────
@@ -64,7 +66,7 @@ class TestPipelineEndToEnd:
                     "audioData": VALID_WAV_B64,
                     "inputLanguage": "hi",
                     "targetLanguage": "hi",
-                    "object_grabbed": "silk_scarf",
+                    "object_grabbed": "tomato",
                     "happiness_score": 50,
                     "negotiation_state": "GREETING",
                 })
@@ -280,7 +282,7 @@ class TestFullNegotiationFlow:
                         "audioData": VALID_WAV_B64,
                         "inputLanguage": "hi",
                         "targetLanguage": "hi",
-                        "object_grabbed": "Silk_Scarf",
+                        "object_grabbed": "Tomato",
                         "happiness_score": 50,
                         "negotiation_state": current,
                     })
@@ -408,7 +410,7 @@ class TestRAGIntegration:
     @pytest.mark.asyncio
     async def test_rag_retrieves_context(self):
         """Pipeline completes even when RAG returns results."""
-        mock_stt = AsyncMock(return_value="Namaste bhaiya silk scarf dikhao")
+        mock_stt = AsyncMock(return_value="Namaste bhaiya tamatar dikhao")
         mock_tts = AsyncMock(return_value=b"audio")
 
         with patch(_PATCH_STT, mock_stt), patch(_PATCH_TTS, mock_tts):
@@ -418,7 +420,7 @@ class TestRAGIntegration:
                     "audioData": VALID_WAV_B64,
                     "inputLanguage": "hi",
                     "targetLanguage": "hi",
-                    "object_grabbed": "silk_scarf",
+                    "object_grabbed": "tomato",
                     "happiness_score": 50,
                     "negotiation_state": "GREETING",
                 })

@@ -1,21 +1,164 @@
-Bazaar Items — Prices, Quality, and Negotiation Tips
+[Item: Tomato (Tamatar)]
+Wholesale Price: ₹20-30/kg (mandi rate, seasonal)
+Fair Retail Price: ₹40-60/kg (local customer rate)
+Tourist/Inflated Price: ₹100-150/kg (first quote to outsiders)
+Vendor Margin Floor: ₹35/kg (below this, vendor loses money)
+Quality Check: Firm and bright red = fresh. Soft or wrinkled = old stock. Smell should be earthy, not sour.
+Bargaining Tip: Tomatoes are perishable -- vendors sell cheaper in the evening to avoid waste. Morning prices are higher.
+Good Opening Bid: ₹30-40/kg. Vendor will settle at ₹40-60 for fresh stock.
+Bulk Discount: Buy 2kg+ and ask "Bhaiya 2 kilo le raha hoon, thoda kam karo" for 10-15% off.
+Seasonal Note: Summer prices are lowest (peak harvest). Winter prices rise 2x. Monsoon prices are highest due to crop damage.
 
-Silk Scarf: Wholesale ₹150, Fair Retail ₹300-400, Tourist Price ₹800-1200. Banarasi silk is the most famous variety. To test quality, hold the fabric to light — real silk has a natural sheen and slight irregularities. Synthetic silk feels plasticky and has a uniform shine. A good opening bid is ₹200-250. The vendor will settle around ₹350-450 for genuine silk.
+[Item: Onion (Pyaaz)]
+Wholesale Price: ₹15-25/kg (mandi rate)
+Fair Retail Price: ₹30-50/kg (local customer rate)
+Tourist/Inflated Price: ₹80-120/kg (first quote to outsiders)
+Vendor Margin Floor: ₹25/kg (below this, vendor loses money)
+Quality Check: Dry outer skin = good storage. Soft spots or green shoots = old stock going bad. Should feel heavy and solid.
+Bargaining Tip: Onion prices swing wildly with politics and monsoon. If prices are high citywide, don't push too hard -- the vendor is also hurting.
+Good Opening Bid: ₹20-30/kg. Vendor will settle at ₹30-50 for good quality.
+Bulk Discount: Buy 5kg+ and ask "Bhaiya 5 kilo le raha hoon, sab mila ke kitna hoga?" for 15-20% off.
+Seasonal Note: Prices spike Sept-Nov (pre-harvest gap). Cheapest in Dec-Feb (peak harvest).
 
-Brass Keychain: Wholesale ₹20, Fair Retail ₹50-80, Tourist Price ₹150-200. Common souvenir, low margins. These are mass-produced and widely available, so there is little reason to pay above ₹80. The vendor has very low cost, so they can drop the price quickly. Good for practice bargaining because the stakes are low.
+[Item: Potato (Aloo)]
+Wholesale Price: ₹15-20/kg (mandi rate)
+Fair Retail Price: ₹25-40/kg (local customer rate)
+Tourist/Inflated Price: ₹60-100/kg (first quote to outsiders)
+Vendor Margin Floor: ₹20/kg (below this, not worth selling)
+Quality Check: No green spots (green = solanine = bitter and mildly toxic). Firm skin, no sprouts. Medium size preferred for cooking.
+Bargaining Tip: Potatoes have thin margins -- vendors won't drop much. Better to bundle with other items for combo discount.
+Good Opening Bid: ₹15-25/kg. Vendor will settle at ₹25-35 for fresh stock.
+Bulk Discount: Buy 3kg+ for ₹5-10/kg off. Potatoes store well so bulk buying makes sense.
+Seasonal Note: Relatively stable year-round. Slight price rise in monsoon due to transport issues.
 
-Spice Box (Masala Dabba): Wholesale ₹200, Fair Retail ₹400-500, Tourist Price ₹900-1200. Stainless steel, 7 compartments. Higher-quality versions have magnetic lids and heavier gauge steel. Check for sharp edges on cheaper versions. A good bid starts at ₹300 and settles around ₹400-500.
+[Item: Watermelon (Tarbooz)]
+Wholesale Price: ₹8-12/kg (summer season)
+Fair Retail Price: ₹15-25/kg (local customer rate)
+Tourist/Inflated Price: ₹40-60/kg (first quote to outsiders, per piece pricing is common)
+Vendor Margin Floor: ₹12/kg (below this, vendor loses money)
+Quality Check: Knock on it -- hollow deep sound = ripe and sweet. Look for the yellow spot on the bottom (ground spot) where it sat in the field. No spot = picked too early. Heavier = more water = juicier.
+Bargaining Tip: Watermelon vendors often sell per piece (₹60-100 each). Ask for per-kg rate -- it's always cheaper. "Bhaiya tol ke do" (weigh it) forces fair pricing.
+Good Opening Bid: ₹10-15/kg or ₹40-50 per piece. Vendor settles at ₹15-25/kg.
+Seasonal Note: Available March-July only. Peak cheapest in May-June. Out of season = imported and expensive.
+Freshness Test: If the vendor lets you taste a slice before buying, the watermelon is likely good. Refusing = risky purchase.
 
-Leather Wallet: Wholesale ₹100, Fair Retail ₹250-350, Tourist Price ₹600-800. The biggest quality question is genuine leather versus PU (polyurethane) leather. Genuine leather has a distinctive smell and texture. PU leather is lighter and has a more uniform surface. Ask the vendor to burn a tiny edge — real leather chars, PU melts. Good opening bid is ₹150-200.
+[Item: Mango (Aam)]
+Wholesale Price: ₹40-80/kg (varies wildly by variety)
+Fair Retail Price: ₹80-150/kg (Alphonso/Hapus is premium)
+Tourist/Inflated Price: ₹200-400/kg (first quote for Alphonso)
+Vendor Margin Floor: ₹60/kg (below this, vendor loses money on premium varieties)
+Quality Check: Squeeze gently -- slight give = ripe. Hard = raw. Too soft = overripe. Alphonso has distinct sweet aroma at the stem. No wrinkles near the stem.
+Bargaining Tip: Know your varieties! Alphonso (Hapus) is the king. Dasheri, Langra, Chausa are excellent but cheaper. Vendors often sell Dasheri as Alphonso -- learn the difference.
+Good Opening Bid: ₹60-80/kg for Dasheri/Langra. ₹100-120/kg for genuine Alphonso.
+Bulk Discount: Buy a full "peti" (crate, ~10-12 dozen) for wholesale rates. "Ek peti de do" gets 30-40% off per-kg rate.
+Seasonal Note: Available April-July only. Alphonso season is shorter (April-June). Late season mangoes are cheaper but less sweet.
+Cultural Note: Mango is the national fruit of India. Complimenting the mango variety raises vendor happiness significantly.
 
-Pashmina Shawl: Wholesale ₹500, Fair Retail ₹1000-1500, Tourist Price ₹3000-5000. Many are fake — synthetic fabric sold as pashmina. Real pashmina comes from the Changthangi goat in Kashmir. The "ring test" is popular — a genuine pashmina can be pulled through a finger ring due to its fineness. Good opening bid is ₹800-1000 for genuine quality. Be very cautious — this is the most commonly counterfeited item.
+[Item: Banana (Kela)]
+Wholesale Price: ₹20-30/dozen (mandi rate)
+Fair Retail Price: ₹40-60/dozen (local customer rate)
+Tourist/Inflated Price: ₹80-120/dozen (first quote to outsiders)
+Vendor Margin Floor: ₹30/dozen (below this, not worth selling)
+Quality Check: Yellow with small brown spots = perfectly ripe and sweet. All green = will take 2-3 days to ripen. Black patches = overripe.
+Bargaining Tip: Bananas are sold per dozen, not per kg. Margins are thin so vendors won't drop much. Buy 2 dozen for a combo deal.
+Good Opening Bid: ₹30-40/dozen. Vendor will settle at ₹40-50 for good ripe ones.
+Seasonal Note: Available year-round. Prices stable. South Indian varieties (Elaichi kela) are premium.
 
-Juttis (Traditional Leather Shoes): Wholesale ₹150, Fair Retail ₹300-500, Tourist Price ₹800-1500. Rajasthani juttis are the most iconic. Quality varies widely — check for even stitching and comfortable insoles. Embroidered juttis cost more. A fair price for good quality with embroidery is ₹400-600.
+[Item: Lemon (Nimbu)]
+Wholesale Price: ₹80-120/kg (about 15-20 lemons per kg)
+Fair Retail Price: ₹120-200/kg or ₹5-10 per piece
+Tourist/Inflated Price: ₹15-20 per piece
+Vendor Margin Floor: ₹100/kg
+Quality Check: Bright yellow-green = fresh. Dull or brownish = old. Should feel firm and heavy for size. Thin-skinned lemons are juicier.
+Bargaining Tip: Often sold per piece at inflated rates. Ask "Bhaiya kilo mein do" (give by the kilo) for much better value.
+Good Opening Bid: ₹80-100/kg. Vendor settles at ₹100-150.
+Seasonal Note: Cheapest in summer (June-Aug). Prices spike in winter and monsoon (₹200-300/kg).
 
-Bangles (Glass/Lac): Wholesale ₹10-30 per set, Fair Retail ₹50-100 per set, Tourist Price ₹200-300 per set. Hyderabadi lac bangles and Rajasthani glass bangles are the most popular. These are fragile and break easily, so handle with care. Buying multiple sets gives better per-set pricing. A set of 4-6 bangles should cost ₹50-100.
+[Item: Green Chili (Hari Mirch)]
+Wholesale Price: ₹30-50/kg (mandi rate)
+Fair Retail Price: ₹60-100/kg (local customer rate)
+Tourist/Inflated Price: ₹150-200/kg (first quote to outsiders)
+Vendor Margin Floor: ₹50/kg
+Quality Check: Bright green and firm = fresh. Wrinkled or soft = old. Snap one -- should break crisply with seeds visible. Smell should be sharp and pungent.
+Bargaining Tip: Green chilies are bought in small quantities (100g-250g). Vendors often give them free as a bonus with bigger purchases. "Bhaiya thodi mirch daal do" (throw in some chilies) works with ₹200+ orders.
+Good Opening Bid: ₹40-60/kg. Vendor settles at ₹60-80.
+Bundle Deal: Buy with other vegs and ask for free mirch and dhaniya (coriander) on top.
 
-Miniature Paintings: Wholesale ₹200-500, Fair Retail ₹500-1000, Tourist Price ₹2000-4000. Rajasthani miniature paintings on silk or paper. Quality depends on detail level and materials used. Genuine mineral pigments last longer than chemical paints. Check for hand-painted vs printed reproductions by looking at brush strokes closely.
+[Item: Coriander (Dhaniya)]
+Wholesale Price: ₹20-40/bunch
+Fair Retail Price: ₹10-20/bunch (small) or ₹30-50/bunch (large)
+Tourist/Inflated Price: ₹30-50/bunch
+Vendor Margin Floor: ₹10/bunch
+Quality Check: Bright green leaves, no yellowing. Stems should be firm not wilted. Strong fresh aroma.
+Bargaining Tip: Coriander is often given FREE with vegetable purchases over ₹100-200. "Bhaiya dhaniya daal do" is standard and expected. If vendor charges for it, they're being stingy.
+Cultural Note: Free dhaniya is a sign of a good vendor-customer relationship. A vendor who refuses free dhaniya is likely overcharging on everything else.
 
-Incense Sticks (Agarbatti): Wholesale ₹30-50 per pack, Fair Retail ₹80-120 per pack, Tourist Price ₹200-300 per pack. Mysore sandalwood agarbatti is premium. Nag Champa is the most internationally famous brand. These are lightweight and easy to transport. A good gift item with low cost.
+[Item: Cauliflower (Phool Gobhi)]
+Wholesale Price: ₹20-30/piece (mandi rate)
+Fair Retail Price: ₹30-60/piece (local customer rate)
+Tourist/Inflated Price: ₹80-120/piece (first quote to outsiders)
+Vendor Margin Floor: ₹25/piece
+Quality Check: Tight white florets = fresh. Yellow spots or loose florets = old. Check for worms by looking between florets. Leaves should be green and crisp, not wilted.
+Bargaining Tip: Sold per piece, not per kg usually. Ask "Bhaiya tol ke do" (weigh it) for fair pricing -- some pieces are 500g, some are 1.5kg.
+Good Opening Bid: ₹20-30/piece for medium. ₹40-50 for large. Vendor settles at ₹30-50.
+Seasonal Note: Cheapest in winter (Nov-Feb). Summer prices double.
 
-Copper Water Bottle: Wholesale ₹200, Fair Retail ₹400-600, Tourist Price ₹1000-1500. Ayurvedic tradition says drinking from copper vessels is healthy. Check for pure copper (should have a slight pinkish tone) versus copper-plated. Heavier bottles tend to be better quality. A fair price is ₹400-600.
+[Item: Lady Finger (Bhindi / Okra)]
+Wholesale Price: ₹30-40/kg (mandi rate)
+Fair Retail Price: ₹50-80/kg (local customer rate)
+Tourist/Inflated Price: ₹100-150/kg (first quote to outsiders)
+Vendor Margin Floor: ₹40/kg
+Quality Check: Snap the tip -- should break crisply. If it bends, it's old and fibrous. Bright green, no dark spots. Smaller bhindi (2-3 inches) are more tender than large ones.
+Bargaining Tip: Quality varies hugely. Insist on checking before the vendor bags them. "Bhaiya achhi wali dena" (give the good ones) prevents them from mixing old stock.
+Good Opening Bid: ₹35-50/kg. Vendor settles at ₹50-70.
+Seasonal Note: Summer vegetable. Cheapest June-Sept. Winter prices are 2x.
+
+[Item: Spinach (Palak)]
+Wholesale Price: ₹10-15/bunch
+Fair Retail Price: ₹20-30/bunch (local customer rate)
+Tourist/Inflated Price: ₹40-60/bunch
+Vendor Margin Floor: ₹15/bunch
+Quality Check: Dark green, large leaves = good. Yellowing = old. No slime on leaves. Roots should look freshly cut.
+Bargaining Tip: Leafy greens are very low-margin. Buy 3-4 bunches to negotiate a combo rate. "Bhaiya 3 bunch de do, kitne mein doge?" gets 20-30% off.
+Good Opening Bid: ₹10-15/bunch. Vendor settles at ₹15-25.
+Bundle Deal: Often bundled with methi (fenugreek) and bathua for a "saag combo." 3 bunches for ₹40-50 is a standard deal.
+
+[Item: Apple (Seb)]
+Wholesale Price: ₹60-80/kg (Himachali/Kashmiri)
+Fair Retail Price: ₹80-120/kg (local customer rate)
+Tourist/Inflated Price: ₹150-250/kg (first quote to outsiders)
+Vendor Margin Floor: ₹70/kg
+Quality Check: Firm, no soft spots or bruises. Red doesn't always mean sweet -- ask which variety is sweetest. Shimla apples are seasonal and premium. Imported apples (Washington) are waxed -- rub and check.
+Bargaining Tip: Apples are not heavily bargained but you can negotiate on bulk. Buy 3-5 kg for a better rate. "Bhaiya 3 kilo le raha hoon, ₹80 mein de do" works.
+Good Opening Bid: ₹60-80/kg. Vendor settles at ₹80-100.
+Seasonal Note: Indian apple season is July-November. Off-season = cold storage = less fresh, but discounted.
+
+[Item: Guava (Amrood)]
+Wholesale Price: ₹25-35/kg (mandi rate)
+Fair Retail Price: ₹40-60/kg (local customer rate)
+Tourist/Inflated Price: ₹80-120/kg (first quote at premium shops)
+Vendor Margin Floor: ₹30/kg
+Quality Check: Light green to yellowish = ripe. Hard and dark green = raw. Fragrant sweet aroma = ready to eat. Should give slightly when pressed.
+Bargaining Tip: Very seasonal. When in season (winter), prices are low and vendor will give good deals. "Bhaiya kuch meethe wale chun ke de do" (pick the sweet ones) is expected.
+Good Opening Bid: ₹25-35/kg. Vendor settles at ₹35-50.
+Seasonal Note: Best in winter (Oct-Feb). Cheapest in Nov-Dec. Summer guavas exist but quality is lower.
+Cultural Note: Vendors often let you taste one before buying. If they refuse, quality may be suspect.
+
+[Item: Pomegranate (Anaar)]
+Wholesale Price: ₹80-100/kg
+Fair Retail Price: ₹120-180/kg (local customer rate)
+Tourist/Inflated Price: ₹200-350/kg (first quote)
+Vendor Margin Floor: ₹100/kg
+Quality Check: Heavy for size = juicy. Skin should be firm, not dried. Tap it -- metallic sound = good seeds. Crack at the crown -- deep red seeds = sweet. Pink = sour.
+Bargaining Tip: Pomegranates are premium fruit. Vendor won't drop much but bulk buying (3kg+) gets 10-15% off.
+Good Opening Bid: ₹80-100/kg. Vendor settles at ₹100-150.
+Seasonal Note: Best quality Oct-Feb. Available year-round but summer ones are inferior.
+
+[Item: Capsicum / Bell Pepper (Shimla Mirch)]
+Wholesale Price: ₹30-50/kg (green) / ₹80-120/kg (red/yellow)
+Fair Retail Price: ₹60-80/kg (green) / ₹120-200/kg (red/yellow)
+Tourist/Inflated Price: ₹100-150/kg (green) / ₹200-350/kg (colored)
+Vendor Margin Floor: ₹50/kg (green) / ₹100/kg (colored)
+Quality Check: Firm and glossy = fresh. Wrinkled or soft = old. Green is cheapest and most common. Red and yellow are sweeter but cost 2-3x more.
+Bargaining Tip: Many vendors stock only green shimla mirch. If they have colored ones, they charge premium. "Bhaiya green wali de do" is the budget-smart move.
+Good Opening Bid: ₹40-50/kg (green). Vendor settles at ₹50-70.

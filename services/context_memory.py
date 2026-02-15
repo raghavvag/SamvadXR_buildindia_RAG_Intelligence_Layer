@@ -83,13 +83,15 @@ class ConversationMemory:
                     )
                 turn_num += 1
         block = "\n".join(parts)
-        logger.debug(
+        logger.info(
             "Context block: session=%s, %d chars, %d recent turns, summary=%s",
             self.session_id or "(no-id)",
             len(block),
             len(self._turns),
             "yes" if self._rolling_summary else "no",
         )
+        if block:
+            logger.info("Context block content:\n%s", block[:500])
         return block
 
     def get_recent_turns(self, n: int = 5) -> list[DialogueTurn]:

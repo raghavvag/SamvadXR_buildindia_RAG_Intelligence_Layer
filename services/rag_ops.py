@@ -187,3 +187,80 @@ async def retrieve_context(query: str, n_results: int = 3) -> str:
     )
     return context
 
+
+# ── Dynamic RAG — inject conversation turns ───────────────────────────
+
+async def add_conversation_to_rag(
+    session_id: str,
+    turn_index: int,
+    user_text: str,
+    vendor_text: str,
+    object_grabbed: str = "",
+) -> None:
+    """
+    Add a user+vendor exchange to ChromaDB so future RAG queries
+    return conversation-relevant context, not just static seed data.
+
+    Each exchange is stored as a single document with metadata
+    linking it to the session.
+    """
+    if _collection is None:
+        logger.warning("add_conversation_to_rag: collection not initialized")
+        return
+
+    # Build a rich document from the exchange
+    parts = []
+    if object_grabbed:
+        parts.append(f"[Item discussed: {object_grabbed}]")
+    parts.append(f"Customer: {user_text}")
+    parts.append(f"Vendor: {vendor_text}")
+    doc_text = "\n".join(parts)
+
+    doc_id = f"conv_{session_id}_{turn_index}"
+    meta = {
+        "source": "conversation",
+        "session_id": session_id,
+        "turn_index": turn_index,
+    }
+
+    try:
+        await asyncio.to_thread(
+            _collection.add,
+            documents=[doc_text],
+            ids=[doc_id],
+            metadatas=[meta],
+        )
+        logger.info(
+            "RAG updated: added conversation turn %d (%d chars) for session %s",
+            turn_index, len(doc_text), session_id,
+        )
+    except Exception as e:
+        # Non-fatal — don't crash the pipeline for RAG updates
+        logger.warning("Failed to add conversation to RAG: %s", e)
+
+
+async def clear_conversation_from_rag(session_id: str) -> None:
+    """
+    Remove all conversation-sourced documents for a given session
+    from ChromaDB. Called when a session is reset so stale context
+    doesn't leak into a new session.
+    """
+    if _collection is None:
+        return
+
+    try:
+        # Query for all docs from this session
+        results = await asyncio.to_thread(
+            _collection.get,
+            where={"session_id": session_id},
+        )
+        ids_to_remove = results.get("ids", [])
+        if ids_to_remove:
+            await asyncio.to_thread(_collection.delete, ids=ids_to_remove)
+            logger.info(
+                "RAG cleared %d conversation chunks for session %s",
+                len(ids_to_remove), session_id,
+            )
+    except Exception as e:
+        logger.warning("Failed to clear conversation from RAG: %s", e)
+

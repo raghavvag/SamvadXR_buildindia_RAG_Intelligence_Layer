@@ -35,12 +35,12 @@ def sample_data_dir(tmp_path):
     """Create a temporary data directory with test files."""
     items_file = tmp_path / "items.txt"
     items_file.write_text(
-        "Silk Scarf: Wholesale ₹150, Fair Retail ₹300-400, Tourist Price ₹800-1200. "
-        "Banarasi silk is the most famous variety.\n\n"
-        "Brass Keychain: Wholesale ₹20, Fair Retail ₹50-80, Tourist Price ₹150-200. "
-        "Common souvenir with low margins.\n\n"
-        "Pashmina Shawl: Wholesale ₹500, Fair Retail ₹1000-1500, Tourist Price ₹3000-5000. "
-        "Many are fake — real pashmina comes from Kashmir.",
+        "Tomato: Wholesale ₹20-30/kg, Fair Retail ₹40-60/kg, Tourist Price ₹100-150/kg. "
+        "Firm and bright red means fresh. Summer prices lowest.\n\n"
+        "Mango: Wholesale ₹40-80/kg, Fair Retail ₹80-150/kg, Tourist Price ₹200-400/kg. "
+        "Alphonso is the premium variety. Available April-July only.\n\n"
+        "Watermelon: Wholesale ₹8-12/kg, Fair Retail ₹15-25/kg, Tourist Price ₹40-60/kg. "
+        "Knock for hollow sound to check ripeness. Summer fruit.",
         encoding="utf-8",
     )
 
@@ -170,15 +170,15 @@ class TestRetrieveContext:
 
     @pytest.mark.asyncio
     async def test_returns_string(self, initialized_rag):
-        result = await retrieve_context("silk scarf price")
+        result = await retrieve_context("tomato price")
         assert isinstance(result, str)
 
     @pytest.mark.asyncio
-    async def test_silk_scarf_query_returns_relevant_content(self, initialized_rag):
-        result = await retrieve_context("silk scarf price")
+    async def test_tomato_query_returns_relevant_content(self, initialized_rag):
+        result = await retrieve_context("tomato price")
         assert len(result) > 0
         # Should contain price-related content
-        assert "₹" in result or "Silk" in result or "scarf" in result.lower()
+        assert "₹" in result or "Tomato" in result or "tomato" in result.lower()
 
     @pytest.mark.asyncio
     async def test_bargaining_query_returns_culture_content(self, initialized_rag):
@@ -251,8 +251,8 @@ class TestRealSeedData:
         initialize_knowledge_base()
 
     @pytest.mark.asyncio
-    async def test_silk_scarf_pricing(self):
-        result = await retrieve_context("What is a fair price for a silk scarf?")
+    async def test_tomato_pricing(self):
+        result = await retrieve_context("What is a fair price for tomatoes?")
         assert "₹" in result
 
     @pytest.mark.asyncio
@@ -266,6 +266,6 @@ class TestRealSeedData:
         assert len(result) > 0
 
     @pytest.mark.asyncio
-    async def test_pashmina_fake_detection(self):
-        result = await retrieve_context("How to tell if pashmina is fake?")
-        assert "pashmina" in result.lower() or "fake" in result.lower() or "ring" in result.lower()
+    async def test_watermelon_freshness(self):
+        result = await retrieve_context("How to check if watermelon is fresh and ripe?")
+        assert "watermelon" in result.lower() or "knock" in result.lower() or "ripe" in result.lower() or "tarbooz" in result.lower()
