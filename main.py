@@ -7,10 +7,15 @@ generate_vendor_response() for LLM + Neo4j in Step 7.
 """
 
 import asyncio
+import base64
+import json
 import logging
+import os
+import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from models import InteractRequest, InteractResponse, NegotiationState
@@ -21,6 +26,21 @@ from services.context_memory import ConversationMemory
 from services.exceptions import SarvamServiceError, RAGServiceError
 
 load_dotenv()
+
+# ── Logging setup ──────────────────────────────────────────────────────
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    datefmt="%H:%M:%S",
+    stream=sys.stdout,
+)
+
+# Quiet noisy third-party loggers
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("chromadb").setLevel(logging.WARNING)
 
 logger = logging.getLogger("samvadxr")
 
@@ -81,6 +101,139 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS — allow all origins so ngrok / external clients can hit us
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ── Raw body logger (runs BEFORE Pydantic validation) ──────────────────
+@app.middleware("http")
+async def log_raw_request(request: Request, call_next):
+    if request.url.path.startswith("/api/"):
+        body = await request.body()
+        logger.info("━" * 60)
+        logger.info("📥 RAW INCOMING  %s %s", request.method, request.url.path)
+        logger.info("   Content-Type : %s", request.headers.get("content-type", "N/A"))
+        logger.info("   Body length  : %d bytes", len(body))
+        # Print body (truncate audio_base64 if huge)
+        try:
+            body_str = body.decode("utf-8")
+            parsed = json.loads(body_str)
+            # Truncate audio_base64 for readability
+            display = dict(parsed)
+            for key in ("audio_base64", "audioData"):
+                if key in display and len(str(display[key])) > 200:
+                    display[key] = str(display[key])[:200] + f"...({len(str(parsed[key]))} chars total)"
+            logger.info("   Body         : %s", json.dumps(display, indent=2, ensure_ascii=False))
+        except Exception:
+            logger.info("   Body (raw)   : %s", body[:500])
+        logger.info("━" * 60)
+    response = await call_next(request)
+    return response
+
+
+# ── Health ─────────────────────────────────────────────────────────────
+
+@app.get("/health")
+async def health():
+    """Quick connectivity check."""
+    return {"status": "ok", "service": "samvadxr-intelligence-engine"}
+
+
+# ── Test endpoint (for friend / Dev A to hit via ngrok) ────────────────
+
+from pydantic import BaseModel, Field
+from typing import Any
+
+
+class TestRequest(BaseModel):
+    """Payload from frontend: base64 WAV + language/context fields."""
+    audioData: str = Field(..., description="Base64-encoded mono WAV (16 kHz)")
+    inputLanguage: str = Field("en", description="Source language code")
+    targetLanguage: str = Field("en", description="Target language code")
+    contextTag: str = Field("general", description="Scene/context tag")
+
+
+@app.post("/api/test")
+async def test_pipeline(req: TestRequest):
+    """
+    Test endpoint — accepts frontend JSON payload.
+    Runs: decode → STT → mock brain → TTS → encode.
+
+    Body:
+    {
+        "audioData": "<base64 mono WAV 16kHz>",
+        "inputLanguage": "en",
+        "targetLanguage": "en",
+        "contextTag": "general"
+    }
+    """
+    session_id = "test-session"
+    language_code = req.inputLanguage
+
+    # ── Log incoming request ──
+    logger.info("─" * 60)
+    logger.info("▶ REQUEST  /api/test")
+    logger.info("  inputLanguage : %s", req.inputLanguage)
+    logger.info("  targetLanguage: %s", req.targetLanguage)
+    logger.info("  contextTag    : %s", req.contextTag)
+    logger.info("  audioData     : %d chars", len(req.audioData))
+
+    # 1. Decode base64 → raw bytes
+    try:
+        audio_bytes = base64_to_bytes(req.audioData)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid audioData: {e}")
+
+    # 2. STT
+    try:
+        transcribed_text = await transcribe_with_sarvam(audio_bytes, language_code)
+    except SarvamServiceError as e:
+        raise HTTPException(status_code=503, detail=f"STT failed: {e}")
+
+    # 3. Mock brain
+    brain_result = await _mock_generate_vendor_response(
+        transcribed_text=transcribed_text,
+        context_block="",
+        rag_context="",
+        scene_context={"contextTag": req.contextTag, "targetLanguage": req.targetLanguage},
+        session_id=session_id,
+    )
+
+    # 4. TTS → base64
+    agent_audio_b64 = ""
+    try:
+        tts_bytes = await speak_with_sarvam(brain_result["reply_text"], req.targetLanguage)
+        agent_audio_b64 = bytes_to_base64(tts_bytes)
+    except SarvamServiceError:
+        pass
+
+    response = {
+        "session_id": session_id,
+        "inputLanguage": req.inputLanguage,
+        "targetLanguage": req.targetLanguage,
+        "contextTag": req.contextTag,
+        "transcribed_text": transcribed_text,
+        "agent_reply_text": brain_result["reply_text"],
+        "agent_audio_base64": agent_audio_b64,
+        "vendor_mood": brain_result.get("vendor_mood", "neutral"),
+    }
+
+    # ── Log outgoing response ──
+    logger.info("◀ RESPONSE /api/test")
+    logger.info("  transcribed  : %s", transcribed_text)
+    logger.info("  reply_text   : %s", brain_result["reply_text"])
+    logger.info("  audio_out    : %d chars", len(agent_audio_b64))
+    logger.info("  vendor_mood  : %s", brain_result.get("vendor_mood", "neutral"))
+    logger.info("─" * 60)
+
+    return response
+
 
 # ── Main endpoint ─────────────────────────────────────────────────────
 @app.post("/api/interact", response_model=InteractResponse)
@@ -89,6 +242,15 @@ async def interact(request: InteractRequest) -> InteractResponse:
     Full pipeline: Audio in → STT → Memory → RAG → LLM (Dev A) → TTS → Audio out.
     Steps 1–11 as defined in execution_plan.md.
     """
+    # ── Log incoming request ──
+    logger.info("═" * 60)
+    logger.info("▶ REQUEST  /api/interact")
+    logger.info("  session_id   : %s", request.session_id)
+    logger.info("  language_code: %s", request.language_code)
+    logger.info("  audio_base64 : %d chars", len(request.audio_base64))
+    logger.info("  scene_context: %s", json.dumps(request.scene_context.model_dump(), ensure_ascii=False))
+    logger.info("═" * 60)
+
     memory = get_memory(request.session_id)
 
     # Step 2 — Decode audio
@@ -180,7 +342,7 @@ async def interact(request: InteractRequest) -> InteractResponse:
         logger.warning("TTS unavailable, sending text-only response")
 
     # Step 11 — Return response to Unity
-    return InteractResponse(
+    resp = InteractResponse(
         session_id=request.session_id,
         transcribed_text=transcribed_text,
         agent_reply_text=result["reply_text"],
@@ -196,6 +358,19 @@ async def interact(request: InteractRequest) -> InteractResponse:
             deal_status="negotiating",
         ),
     )
+
+    # ── Log outgoing response ──
+    logger.info("═" * 60)
+    logger.info("◀ RESPONSE /api/interact")
+    logger.info("  transcribed  : %s", transcribed_text)
+    logger.info("  reply_text   : %s", result["reply_text"])
+    logger.info("  audio_out    : %d chars", len(agent_audio_base64))
+    logger.info("  vendor_mood  : %s", result.get("vendor_mood", "neutral"))
+    logger.info("  negotiation  : stage=%s, price=%s, happiness=%s",
+                result.get("new_stage"), result.get("price_offered"), result.get("vendor_happiness"))
+    logger.info("═" * 60)
+
+    return resp
 
 
 # ── Run with uvicorn ──────────────────────────────────────────────────

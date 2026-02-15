@@ -1,0 +1,34 @@
+# Environment & secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Testing / caching
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ChromaDB local storage
+chroma_data/
