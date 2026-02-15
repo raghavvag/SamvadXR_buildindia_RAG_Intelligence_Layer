@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import sys
+import time
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -54,32 +55,53 @@ def get_memory(session_id: str) -> ConversationMemory:
     return sessions[session_id]
 
 
-# ── Mock brain (used until Dev A provides real generate_vendor_response) ─
-async def _mock_generate_vendor_response(
+# ── Dummy brain for testing (skip Dev A for now) ──────────────────────
+_DUMMY_REPLIES = {
+    "GREETING":    "Arre sahab! Aao aao, dekhiye humari dukaan mein bahut achhi cheezein hain!",
+    "INQUIRY":     "Yeh bilkul asli hai sahab, pure silk ka hai. Aap chhukar dekhiye!",
+    "BARGAINING":  "Itna kam? Sahab yeh toh cost price se bhi kam hai! Chaliye thoda aur badhaaiye.",
+    "COUNTER":     "Achha chaliye aapke liye special price — 800 rupaye, final offer!",
+    "DEAL_CLOSED": "Bahut achha! Deal pakki. Aapne achhi kharidari ki sahab!",
+}
+
+_STATE_TRANSITIONS = {
+    "GREETING":    "INQUIRY",
+    "INQUIRY":     "BARGAINING",
+    "BARGAINING":  "COUNTER",
+    "COUNTER":     "DEAL_CLOSED",
+    "DEAL_CLOSED": "DEAL_CLOSED",
+}
+
+
+async def _dummy_generate_vendor_response(
     transcribed_text: str,
     context_block: str,
     rag_context: str,
     scene_context: dict,
     session_id: str,
 ) -> dict:
-    """Placeholder until Dev A provides the real function."""
+    """Hardcoded dummy response for end-to-end testing without Dev A's brain."""
+    current_state = scene_context.get("negotiation_state", "GREETING")
+    next_state = _STATE_TRANSITIONS.get(current_state, "GREETING")
+    happiness = scene_context.get("happiness_score", 50)
+
+    # Slightly adjust happiness based on state
+    if next_state == "BARGAINING":
+        happiness = max(0, happiness - 10)
+    elif next_state == "DEAL_CLOSED":
+        happiness = min(100, happiness + 20)
+
     return {
-        "reply_text": f"[MOCK] Vendor responding to: {transcribed_text[:50]}",
-        "new_mood": scene_context.get("vendor_happiness", 50),
-        "new_stage": scene_context.get("negotiation_stage", "GREETING"),
-        "price_offered": scene_context.get("current_price", 0),
-        "vendor_happiness": scene_context.get("vendor_happiness", 50),
-        "vendor_patience": scene_context.get("vendor_patience", 70),
-        "vendor_mood": "neutral",
+        "reply_text": _DUMMY_REPLIES.get(current_state, _DUMMY_REPLIES["GREETING"]),
+        "negotiation_state": next_state,
+        "happiness_score": happiness,
+        "vendor_mood": "friendly" if happiness >= 50 else "annoyed",
     }
 
 
-# Try to import Dev A's real function; fall back to mock
-try:
-    from brain import generate_vendor_response  # type: ignore
-except ImportError:
-    generate_vendor_response = _mock_generate_vendor_response
-    logger.info("Dev A's brain not found — using mock generate_vendor_response")
+# ── Use dummy brain for now (swap to Dev A's real function later) ─────
+generate_vendor_response = _dummy_generate_vendor_response
+logger.info("Using DUMMY brain for testing — Dev A's brain not connected")
 
 
 # ── App lifespan (startup / shutdown) ──────────────────────────────────
@@ -152,27 +174,38 @@ from typing import Any
 
 
 class TestRequest(BaseModel):
-    """Payload from frontend: base64 WAV + language/context fields."""
+    """Payload from Unity frontend — matches C# MinimalRequest."""
     audioData: str = Field(..., description="Base64-encoded mono WAV (16 kHz)")
     inputLanguage: str = Field("en", description="Source language code")
     targetLanguage: str = Field("en", description="Target language code")
-    contextTag: str = Field("general", description="Scene/context tag")
+    object_grabbed: str = Field("", description="Item the user is holding")
+    happiness_score: int = Field(50, description="Vendor happiness 0-100")
+    negotiation_state: str = Field("GREETING", description="Current negotiation stage")
 
 
 @app.post("/api/test")
 async def test_pipeline(req: TestRequest):
     """
-    Test endpoint — accepts frontend JSON payload.
-    Runs: decode → STT → mock brain → TTS → encode.
+    Main pipeline endpoint — matches Unity's MinimalRequest → BackendFullResponse.
 
-    Body:
+    Receives:
     {
         "audioData": "<base64 mono WAV 16kHz>",
         "inputLanguage": "en",
         "targetLanguage": "en",
-        "contextTag": "general"
+        "object_grabbed": "silk_scarf",
+        "happiness_score": 50,
+        "negotiation_state": "GREETING"
+    }
+
+    Returns:
+    {
+        "reply": "<transcribed user speech>",
+        "audioReply": "<base64 TTS audio of vendor response>",
+        "negotiation_state": "HAGGLING"
     }
     """
+    request_start = time.perf_counter()
     session_id = "test-session"
     language_code = normalize_language_code(req.inputLanguage)
     target_language = normalize_language_code(req.targetLanguage)
@@ -180,95 +213,138 @@ async def test_pipeline(req: TestRequest):
     # ── Log incoming request ──
     logger.info("─" * 60)
     logger.info("▶ REQUEST  /api/test")
-    logger.info("  inputLanguage : %s → %s", req.inputLanguage, language_code)
-    logger.info("  targetLanguage: %s → %s", req.targetLanguage, target_language)
-    logger.info("  contextTag    : %s", req.contextTag)
-    logger.info("  audioData     : %d chars", len(req.audioData))
+    logger.info("  inputLanguage     : %s → %s", req.inputLanguage, language_code)
+    logger.info("  targetLanguage    : %s → %s", req.targetLanguage, target_language)
+    logger.info("  object_grabbed    : %s", req.object_grabbed)
+    logger.info("  happiness_score   : %d", req.happiness_score)
+    logger.info("  negotiation_state : %s", req.negotiation_state)
+    logger.info("  audioData         : %d chars", len(req.audioData))
 
-    # Step 2 — Decode base64 → raw bytes
+    # ── Step 2 — Decode base64 → raw bytes ──
+    t0 = time.perf_counter()
     try:
         audio_bytes = base64_to_bytes(req.audioData)
     except ValueError as e:
+        logger.error("Step 2 FAILED: Invalid audioData — %s", e)
         raise HTTPException(status_code=400, detail=f"Invalid audioData: {e}")
+    logger.info("  Step 2 decode : %d bytes (%.1fms)", len(audio_bytes), (time.perf_counter() - t0) * 1000)
 
-    # Step 3 — STT
+    # ── Step 3 — STT ──
+    t0 = time.perf_counter()
     try:
         transcribed_text = await transcribe_with_sarvam(audio_bytes, language_code)
     except SarvamServiceError as e:
+        logger.error("Step 3 FAILED: STT error — %s", e)
         raise HTTPException(status_code=503, detail=f"STT failed: {e}")
+    logger.info("  Step 3 STT    : \"%s\" (%.0fms)", transcribed_text[:80], (time.perf_counter() - t0) * 1000)
 
-    # Step 4 — Store user turn in memory
+    # Silence detected — short-circuit
+    if transcribed_text == "":
+        elapsed = (time.perf_counter() - request_start) * 1000
+        logger.info("  Silence detected — returning prompt (%.0fms total)", elapsed)
+        return {
+            "reply": "",
+            "audioReply": "",
+            "negotiation_state": req.negotiation_state,
+        }
+
+    # ── Step 4 — Store user turn in memory ──
     memory = get_memory(session_id)
+    logger.info("  Step 4 memory : session=%s, total_turns=%d", session_id, len(memory.get_recent_turns(n=100)))
     memory.add_turn(
         role="user",
         text=transcribed_text,
         metadata={
-            "inputLanguage": req.inputLanguage,
-            "targetLanguage": req.targetLanguage,
-            "contextTag": req.contextTag,
+            "object_grabbed": req.object_grabbed,
+            "happiness_score": req.happiness_score,
+            "negotiation_state": req.negotiation_state,
         },
     )
 
-    # Steps 5 & 6 — Parallel: context history + RAG retrieval
+    # ── Steps 5 & 6 — Parallel: context history + RAG retrieval ──
+    t0 = time.perf_counter()
     rag_context = ""
     try:
         context_block, rag_context = await asyncio.gather(
             asyncio.to_thread(memory.get_context_block),
             retrieve_context(transcribed_text, n_results=3),
         )
-    except RAGServiceError:
+    except RAGServiceError as e:
         context_block = memory.get_context_block()
         rag_context = ""
-        logger.warning("RAG unavailable, continuing without context")
+        logger.warning("RAG unavailable (%s), continuing without context", e)
 
-    logger.info("  context_block: %d chars", len(context_block))
-    logger.info("  rag_context  : %d chars", len(rag_context))
+    logger.info("  Steps 5+6     : context=%d chars, rag=%d chars (%.0fms)",
+                len(context_block), len(rag_context), (time.perf_counter() - t0) * 1000)
     if rag_context:
-        logger.info("  rag_preview  : %s", rag_context[:200])
+        logger.info("  rag_preview   : %s", rag_context[:200])
 
-    # Step 7 — Brain (mock or Dev A's real function)
-    brain_result = await generate_vendor_response(
-        transcribed_text=transcribed_text,
-        context_block=context_block,
-        rag_context=rag_context,
-        scene_context={"contextTag": req.contextTag, "targetLanguage": req.targetLanguage},
-        session_id=session_id,
-    )
+    # ── Step 7 — Brain (mock or Dev A's real function) ──
+    # Build scene_context dict from Unity's flat fields
+    scene_context = {
+        "object_grabbed": req.object_grabbed,
+        "happiness_score": req.happiness_score,
+        "negotiation_state": req.negotiation_state,
+        "targetLanguage": req.targetLanguage,
+    }
 
-    # Step 8 — Store vendor turn in memory
+    t0 = time.perf_counter()
+    logger.info("  Step 7 brain  : calling generate_vendor_response...")
+    logger.info("    input text    : %s", transcribed_text[:100])
+    logger.info("    scene_context : %s", json.dumps(scene_context, ensure_ascii=False))
+    try:
+        brain_result = await generate_vendor_response(
+            transcribed_text=transcribed_text,
+            context_block=context_block,
+            rag_context=rag_context,
+            scene_context=scene_context,
+            session_id=session_id,
+        )
+    except Exception as e:
+        logger.error("Step 7 FAILED: Brain error — %s", e)
+        raise HTTPException(status_code=500, detail=f"Brain error: {e}")
+    logger.info("  Step 7 result : %s (%.0fms)", json.dumps(brain_result, ensure_ascii=False)[:300],
+                (time.perf_counter() - t0) * 1000)
+
+    # Extract updated state from Dev A's response
+    updated_negotiation_state = brain_result.get("negotiation_state", req.negotiation_state)
+
+    # ── Step 8 — Store vendor turn in memory ──
     memory.add_turn(
         role="vendor",
         text=brain_result["reply_text"],
-        metadata={"vendor_mood": brain_result.get("vendor_mood", "neutral")},
+        metadata={
+            "vendor_mood": brain_result.get("vendor_mood", "neutral"),
+            "happiness_score": brain_result.get("happiness_score", req.happiness_score),
+            "negotiation_state": updated_negotiation_state,
+        },
     )
 
-    # Step 9 & 10 — TTS → base64
-    agent_audio_b64 = ""
+    # ── Steps 9 & 10 — TTS → base64 ──
+    t0 = time.perf_counter()
+    audio_reply = ""
     try:
         tts_bytes = await speak_with_sarvam(brain_result["reply_text"], target_language)
-        agent_audio_b64 = bytes_to_base64(tts_bytes)
-    except SarvamServiceError:
-        logger.warning("TTS unavailable, sending text-only response")
+        audio_reply = bytes_to_base64(tts_bytes)
+        logger.info("  Steps 9+10    : TTS %d bytes → %d chars b64 (%.0fms)",
+                    len(tts_bytes), len(audio_reply), (time.perf_counter() - t0) * 1000)
+    except SarvamServiceError as e:
+        logger.warning("Steps 9+10 FAILED: TTS unavailable — %s (sending text-only)", e)
 
+    # ── Step 11 — Return BackendFullResponse to Unity ──
     response = {
-        "session_id": session_id,
-        "inputLanguage": req.inputLanguage,
-        "targetLanguage": req.targetLanguage,
-        "contextTag": req.contextTag,
-        "transcribed_text": transcribed_text,
-        "agent_reply_text": brain_result["reply_text"],
-        "agent_audio_base64": agent_audio_b64,
-        "vendor_mood": brain_result.get("vendor_mood", "neutral"),
-        "rag_context_used": rag_context[:500] if rag_context else "",
+        "reply": transcribed_text,
+        "audioReply": audio_reply,
+        "negotiation_state": updated_negotiation_state,
     }
 
     # ── Log outgoing response ──
-    logger.info("◀ RESPONSE /api/test")
-    logger.info("  transcribed  : %s", transcribed_text)
-    logger.info("  reply_text   : %s", brain_result["reply_text"])
-    logger.info("  audio_out    : %d chars", len(agent_audio_b64))
-    logger.info("  vendor_mood  : %s", brain_result.get("vendor_mood", "neutral"))
-    logger.info("  rag_context  : %d chars", len(rag_context))
+    total_ms = (time.perf_counter() - request_start) * 1000
+    logger.info("◀ RESPONSE /api/test (%.0fms total)", total_ms)
+    logger.info("  transcribed        : %s", transcribed_text)
+    logger.info("  vendor_reply       : %s", brain_result["reply_text"])
+    logger.info("  audio_out          : %d chars", len(audio_reply))
+    logger.info("  negotiation_state  : %s → %s", req.negotiation_state, updated_negotiation_state)
     logger.info("─" * 60)
 
     return response
@@ -281,6 +357,8 @@ async def interact(request: InteractRequest) -> InteractResponse:
     Full pipeline: Audio in → STT → Memory → RAG → LLM (Dev A) → TTS → Audio out.
     Steps 1–11 as defined in execution_plan.md.
     """
+    request_start = time.perf_counter()
+
     # ── Log incoming request ──
     logger.info("═" * 60)
     logger.info("▶ REQUEST  /api/interact")
@@ -293,21 +371,29 @@ async def interact(request: InteractRequest) -> InteractResponse:
     memory = get_memory(request.session_id)
 
     # Step 2 — Decode audio
+    t0 = time.perf_counter()
     try:
         audio_bytes = base64_to_bytes(request.audio_base64)
     except ValueError as e:
+        logger.error("Step 2 FAILED: Invalid audio data — %s", e)
         raise HTTPException(status_code=400, detail=f"Invalid audio data: {e}")
+    logger.info("  Step 2 decode : %d bytes (%.1fms)", len(audio_bytes), (time.perf_counter() - t0) * 1000)
 
     # Step 3 — Speech-to-Text
+    t0 = time.perf_counter()
     try:
         transcribed_text = await transcribe_with_sarvam(
             audio_bytes, request.language_code
         )
     except SarvamServiceError as e:
+        logger.error("Step 3 FAILED: STT error — %s", e)
         raise HTTPException(status_code=503, detail=f"Voice recognition unavailable: {e}")
+    logger.info("  Step 3 STT    : \"%s\" (%.0fms)", transcribed_text[:80], (time.perf_counter() - t0) * 1000)
 
     # Silence detected — short-circuit
     if transcribed_text == "":
+        elapsed = (time.perf_counter() - request_start) * 1000
+        logger.info("  Silence detected — short-circuit (%.0fms total)", elapsed)
         return InteractResponse(
             session_id=request.session_id,
             transcribed_text="",
@@ -334,23 +420,26 @@ async def interact(request: InteractRequest) -> InteractResponse:
     )
 
     # Steps 5 & 6 — Parallel: context history + RAG
+    t0 = time.perf_counter()
     try:
         context_block, rag_context = await asyncio.gather(
             asyncio.to_thread(memory.get_context_block),
             retrieve_context(transcribed_text, n_results=3),
         )
-    except RAGServiceError:
+    except RAGServiceError as e:
         # Graceful degradation — continue without RAG
         context_block = memory.get_context_block()
         rag_context = ""
-        logger.warning("RAG unavailable, continuing without context")
+        logger.warning("RAG unavailable (%s), continuing without context", e)
 
-    logger.info("  context_block: %d chars", len(context_block))
-    logger.info("  rag_context  : %d chars", len(rag_context))
+    logger.info("  Steps 5+6     : context=%d chars, rag=%d chars (%.0fms)",
+                len(context_block), len(rag_context), (time.perf_counter() - t0) * 1000)
     if rag_context:
-        logger.info("  rag_preview  : %s", rag_context[:200])
+        logger.info("  rag_preview   : %s", rag_context[:200])
 
     # Step 7 — Call Dev A's brain (LLM + Neo4j validation)
+    t0 = time.perf_counter()
+    logger.info("  Step 7 brain  : calling generate_vendor_response...")
     try:
         result = await generate_vendor_response(
             transcribed_text=transcribed_text,
@@ -360,7 +449,10 @@ async def interact(request: InteractRequest) -> InteractResponse:
             session_id=request.session_id,
         )
     except Exception as e:
+        logger.error("Step 7 FAILED: Brain/LLM error — %s", e)
         raise HTTPException(status_code=500, detail=f"LLM error: {e}")
+    logger.info("  Step 7 result : %s (%.0fms)", json.dumps(result, ensure_ascii=False)[:300],
+                (time.perf_counter() - t0) * 1000)
 
     # Step 8 — Store vendor turn
     memory.add_turn(
@@ -375,6 +467,7 @@ async def interact(request: InteractRequest) -> InteractResponse:
     )
 
     # Step 9 — Text-to-Speech
+    t0 = time.perf_counter()
     agent_audio_base64 = ""
     try:
         tts_bytes = await speak_with_sarvam(
@@ -382,9 +475,11 @@ async def interact(request: InteractRequest) -> InteractResponse:
         )
         # Step 10 — Encode audio
         agent_audio_base64 = bytes_to_base64(tts_bytes)
-    except SarvamServiceError:
+        logger.info("  Steps 9+10    : TTS %d bytes → %d chars b64 (%.0fms)",
+                    len(tts_bytes), len(agent_audio_base64), (time.perf_counter() - t0) * 1000)
+    except SarvamServiceError as e:
         # Subtitle mode — text-only response
-        logger.warning("TTS unavailable, sending text-only response")
+        logger.warning("Steps 9+10 FAILED: TTS unavailable — %s (sending text-only)", e)
 
     # Step 11 — Return response to Unity
     resp = InteractResponse(
@@ -405,8 +500,9 @@ async def interact(request: InteractRequest) -> InteractResponse:
     )
 
     # ── Log outgoing response ──
+    total_ms = (time.perf_counter() - request_start) * 1000
     logger.info("═" * 60)
-    logger.info("◀ RESPONSE /api/interact")
+    logger.info("◀ RESPONSE /api/interact (%.0fms total)", total_ms)
     logger.info("  transcribed  : %s", transcribed_text)
     logger.info("  reply_text   : %s", result["reply_text"])
     logger.info("  audio_out    : %d chars", len(agent_audio_base64))

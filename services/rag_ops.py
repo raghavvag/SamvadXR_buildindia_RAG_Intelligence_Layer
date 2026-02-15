@@ -162,6 +162,7 @@ async def retrieve_context(query: str, n_results: int = 3) -> str:
         return ""
 
     if not query or not query.strip():
+        logger.debug("retrieve_context: empty query, returning ''")
         return ""
 
     try:

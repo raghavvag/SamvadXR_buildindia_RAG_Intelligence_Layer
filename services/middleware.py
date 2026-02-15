@@ -6,6 +6,9 @@ No I/O, no async — just computation.
 """
 
 import base64
+import logging
+
+logger = logging.getLogger("samvadxr.middleware")
 
 
 def base64_to_bytes(b64_string: str) -> bytes:
@@ -25,15 +28,25 @@ def base64_to_bytes(b64_string: str) -> bytes:
         ValueError: If the input is not valid Base64.
     """
     if not b64_string:
+        logger.error("base64_to_bytes called with empty string")
         raise ValueError("Invalid base64 input: empty string")
 
+    had_header = False
     # Strip data-URI header if present
     if "," in b64_string and b64_string.startswith("data:"):
+        had_header = True
         b64_string = b64_string.split(",", 1)[1]
 
     try:
-        return base64.b64decode(b64_string, validate=True)
+        result = base64.b64decode(b64_string, validate=True)
+        logger.info(
+            "base64_to_bytes: %d chars → %d bytes%s",
+            len(b64_string), len(result),
+            " (data-URI header stripped)" if had_header else "",
+        )
+        return result
     except Exception as e:
+        logger.error("base64_to_bytes FAILED: %s (input: %d chars)", e, len(b64_string))
         raise ValueError(f"Invalid base64 input: {e}") from e
 
 
@@ -47,4 +60,6 @@ def bytes_to_base64(audio_bytes: bytes) -> str:
     Returns:
         Clean Base64 string without any prefix.
     """
-    return base64.b64encode(audio_bytes).decode("utf-8")
+    result = base64.b64encode(audio_bytes).decode("utf-8")
+    logger.info("bytes_to_base64: %d bytes → %d chars", len(audio_bytes), len(result))
+    return result

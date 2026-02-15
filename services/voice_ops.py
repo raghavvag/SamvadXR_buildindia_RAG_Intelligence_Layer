@@ -164,7 +164,7 @@ async def speak_with_sarvam(text: str, language_code: str) -> bytes:
             response = await client.text_to_speech.convert(
                 text=text,
                 target_language_code=lang,
-                speaker="anushka",
+                speaker="priya",
                 model="bulbul:v3",
             )
 

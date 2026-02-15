@@ -1,11 +1,22 @@
 """
 Samvad XR — Conversation Memory
 =================================
-Stub — will be fully implemented in Phase 4.
+Instance-based conversation history manager.
+
+One ConversationMemory per active VR session. Stores dialogue
+turns with arbitrary metadata, provides text-only context blocks
+for the LLM, and auto-compresses old turns into a rolling summary
+when the window overflows.
+
+All methods are sync (in-memory only). Dev B creates one per
+session in main.py's session store.
 """
 
+import logging
 import time
 from dataclasses import dataclass, field
+
+logger = logging.getLogger("samvadxr.memory")
 
 
 @dataclass
@@ -25,6 +36,10 @@ class ConversationMemory:
         self.max_window = max_window
         self._turns: list[DialogueTurn] = []
         self._rolling_summary: str = ""
+        logger.debug(
+            "ConversationMemory created: session=%s, max_window=%d",
+            session_id or "(no-id)", max_window,
+        )
 
     def add_turn(self, role: str, text: str, metadata: dict | None = None) -> None:
         """Append a dialogue turn. Triggers compression if window exceeded."""
@@ -35,11 +50,19 @@ class ConversationMemory:
             metadata=metadata or {},
         )
         self._turns.append(turn)
+        logger.info(
+            "Turn added: session=%s, role=%s, text=%.60s, turns_count=%d",
+            self.session_id or "(no-id)", role, text, len(self._turns),
+        )
         if len(self._turns) > self.max_window:
+            logger.info(
+                "Window overflow: %d turns > max %d — compressing",
+                len(self._turns), self.max_window,
+            )
             self._summarize_overflow()
 
     def get_context_block(self) -> str:
-        """Return text-only conversation history (no metadata)."""
+        """Return text-only conversation history (no metadata, no mood, no stage)."""
         parts = []
         if self._rolling_summary:
             parts.append(f"[Summary of earlier conversation]\n{self._rolling_summary}")
@@ -59,7 +82,15 @@ class ConversationMemory:
                         f"{self._turns[i + 1].text}"
                     )
                 turn_num += 1
-        return "\n".join(parts)
+        block = "\n".join(parts)
+        logger.debug(
+            "Context block: session=%s, %d chars, %d recent turns, summary=%s",
+            self.session_id or "(no-id)",
+            len(block),
+            len(self._turns),
+            "yes" if self._rolling_summary else "no",
+        )
+        return block
 
     def get_recent_turns(self, n: int = 5) -> list[DialogueTurn]:
         """Return the last N turns."""
@@ -67,8 +98,13 @@ class ConversationMemory:
 
     def clear(self) -> None:
         """Wipe all turns and summary."""
+        turn_count = len(self._turns)
         self._turns.clear()
         self._rolling_summary = ""
+        logger.info(
+            "Memory cleared: session=%s, removed %d turns",
+            self.session_id or "(no-id)", turn_count,
+        )
 
     def to_dict(self) -> dict:
         """Serialize for persistence."""
@@ -114,3 +150,7 @@ class ConversationMemory:
             self._rolling_summary += "\n" + "\n".join(summary_lines)
         else:
             self._rolling_summary = "\n".join(summary_lines)
+        logger.info(
+            "Compressed %d turns into summary (%d chars total), %d turns remain",
+            overflow_count, len(self._rolling_summary), len(self._turns),
+        )
